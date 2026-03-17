@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TENTIAL Weekly Stock Report — Archive</title>
+<style>
+  :root { --navy: #284B7D; --blue: #567EB0; --beige: #E4C9A5; --light: #F7F4EF; --gray: #888; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+         background: var(--light); color: #333; min-height: 100vh; }
+  .header { background: linear-gradient(315deg, var(--navy), var(--blue));
+            padding: 40px 20px; text-align: center; color: #fff; }
+  .header h1 { font-size: 28px; font-weight: 700; letter-spacing: 1px; }
+  .header p { margin-top: 8px; font-size: 14px; opacity: 0.85; }
+  .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+  .latest-card { background: #fff; border-radius: 12px; padding: 28px 32px;
+                 box-shadow: 0 2px 12px rgba(40,75,125,0.10); margin-bottom: 32px;
+                 border-left: 5px solid var(--navy); }
+  .latest-card h2 { font-size: 14px; color: var(--gray); text-transform: uppercase;
+                     letter-spacing: 2px; margin-bottom: 12px; }
+  .latest-card a { font-size: 22px; color: var(--navy); text-decoration: none; font-weight: 600; }
+  .latest-card a:hover { text-decoration: underline; }
+  .latest-card .date { color: var(--gray); font-size: 13px; margin-top: 6px; }
+  .archive-section h2 { font-size: 16px; color: var(--navy); margin-bottom: 16px;
+                         border-bottom: 2px solid var(--beige); padding-bottom: 8px; }
+  .report-list { list-style: none; }
+  .report-list li { padding: 14px 0; border-bottom: 1px solid #e8e4de; }
+  .report-list li:last-child { border-bottom: none; }
+  .report-list a { color: var(--navy); text-decoration: none; font-size: 15px; font-weight: 500; }
+  .report-list a:hover { color: var(--blue); text-decoration: underline; }
+  .report-list .meta { color: var(--gray); font-size: 12px; margin-left: 12px; }
+  .footer { text-align: center; padding: 32px 20px; color: var(--gray); font-size: 12px; }
+  .empty { color: var(--gray); font-style: italic; padding: 20px 0; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>TENTIAL Weekly Stock Report</h1>
+  <p>325A | 株価パフォーマンス・バリュエーション・需給分析</p>
+</div>
+<div class="container">
+  <div class="latest-card" id="latest-card">
+    <h2>Latest Report</h2>
+    <div id="latest-content"><span class="empty">レポートはまだありません</span></div>
+  </div>
+  <div class="archive-section">
+    <h2>Archive</h2>
+    <ul class="report-list" id="report-list">
+    </ul>
+  </div>
+</div>
+<div class="footer">
+  © 2026 TENTIAL Corporate Planning — Auto-generated weekly report
+</div>
+<script>
+// Report manifest — updated by deploy script
+const REPORTS = [
+  {
+    "url": "reports/weekly_report_20260309.html",
+    "title": "Weekly Report — 2026年03月09日（週）",
+    "date": "2026-03-09",
+    "filename": "weekly_report_20260309.html",
+    "pdf_url": "reports/weekly_report_20260309.pdf"
+  }
+];
+
+if (REPORTS.length > 0) {
+  // Latest
+  const latest = REPORTS[0];
+  document.getElementById('latest-content').innerHTML =
+    `<a href="${latest.url}">${latest.title}</a><div class="date">${latest.date}</div>`;
+  // Archive (skip first = latest)
+  const list = document.getElementById('report-list');
+  REPORTS.slice(1).forEach(r => {
+    const li = document.createElement('li');
+    li.innerHTML = `<a href="${r.url}">${r.title}</a><span class="meta">${r.date}</span>`;
+    list.appendChild(li);
+  });
+  if (REPORTS.length <= 1) {
+    list.innerHTML = '<li class="empty">過去のレポートはまだありません</li>';
+  }
+} else {
+  document.getElementById('report-list').innerHTML = '<li class="empty">レポートはまだありません</li>';
+}
+</script>
+</body>
+</html>

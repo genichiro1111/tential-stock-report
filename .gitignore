@@ -1,0 +1,24 @@
+# Environment & secrets
+.env
+*.pyc
+__pycache__/
+.venv/
+venv/
+
+# Cache
+cache/per_cache.json
+
+# Output (generated files — HTML copies live in docs/)
+output/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Preview/temp
+last_preview.json
