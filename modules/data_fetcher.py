@@ -404,6 +404,7 @@ class StockDataFetcher:
         return start_date.isoformat(), end_date.isoformat()
 
     def fetch_jp_stock(self, code, from_date, to_date):
+        self._current_to_date = to_date
         df = self.jquants.get_daily_quotes(code, from_date, to_date)
         if df.empty:
             logger.info(f"J-Quants empty for {code}, fallback to yfinance")
@@ -413,11 +414,17 @@ class StockDataFetcher:
         return df
 
     def _supplement_latest(self, df: pd.DataFrame, code: str) -> pd.DataFrame:
-        """J-Quants/yfinanceのデータに含まれていない最新日のOHLCVをカブタンから補完"""
+        """J-Quants/yfinanceのデータに含まれていない最新日のOHLCVをカブタンから補完
+        ただし取得期間の終了日から5営業日以上離れた日付は無視する"""
         latest = self.kabutan.get_latest_price(code)
         if not latest:
             return df
         latest_date = pd.Timestamp(latest["Date"])
+        # 取得期間の終了日から大幅に離れた日付は補完しない（最大5営業日 = 7暦日）
+        end_date = pd.Timestamp(getattr(self, '_current_to_date', '2099-12-31'))
+        if latest_date > end_date + pd.Timedelta(days=7):
+            logger.info(f"  {code}: Kabutan date {latest['Date']} too far from period end {self._current_to_date}, skipping")
+            return df
         if df.empty:
             # データが全くない場合はカブタンのみで1行作成
             row = pd.DataFrame([{

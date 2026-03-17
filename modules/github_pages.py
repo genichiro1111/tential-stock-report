@@ -20,16 +20,17 @@ REPORTS_DIR = DOCS_DIR / "reports"
 INDEX_PATH = DOCS_DIR / "index.html"
 
 
-def deploy_to_pages(html_path: Path) -> Optional[str]:
+def deploy_to_pages(html_path) -> Optional[str]:
     """
     HTMLレポートをGitHub Pages用docs/にデプロイ
 
     Args:
-        html_path: 元のHTMLレポートのパス
+        html_path: 元のHTMLレポートのパス（str or Path）
 
     Returns:
         デプロイ先の相対パス（reports/weekly_report_YYYYMMDD.html）
     """
+    html_path = Path(html_path)
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
     # HTMLをdocs/reports/にコピー

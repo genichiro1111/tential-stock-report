@@ -212,12 +212,21 @@ class NotionPublisher:
             return self.db_id
         return ""
 
-    def _check_duplicate(self, week_start):
-        if not self.db_id: return False
+    def _find_existing(self, week_start):
+        """同じ対象週のレポートがあれば既存ページIDを返す"""
+        if not self.db_id: return None
         r = self.client.query_database(self.db_id, {"property":"対象週","date":{"equals":week_start}})
-        if r.get("results"):
-            logger.warning(f"⚠️ Report for {week_start} already exists"); return True
-        return False
+        results = r.get("results", [])
+        if results:
+            return results[0].get("id")
+        return None
+
+    def _archive_page(self, page_id):
+        """既存ページをアーカイブ（削除）"""
+        r = self.client._req("PATCH", f"/pages/{page_id}", {"archived": True})
+        if r:
+            logger.info(f"🗑️ Archived existing page: {page_id}")
+        return r
 
     def publish(self, quant, qual, metadata=None, pages_path=None):
         db_id = self._ensure_database()
@@ -228,7 +237,11 @@ class NotionPublisher:
             today = datetime.date.today()
             dsf = (today.weekday()-4)%7; ed = today-datetime.timedelta(days=dsf)
             ws, we = (ed-datetime.timedelta(days=4)).isoformat(), ed.isoformat()
-        if self._check_duplicate(ws): return None
+        # 既存レポートがあればアーカイブして再作成
+        existing_id = self._find_existing(ws)
+        if existing_id:
+            logger.info(f"♻️ Report for {ws} exists — replacing...")
+            self._archive_page(existing_id)
         # Build GitHub Pages URL
         report_url = None
         if GITHUB_PAGES_BASE_URL and pages_path:

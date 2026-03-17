@@ -52,7 +52,7 @@ COMPS: List[CompanyInfo] = [
 
 BENCHMARKS: Dict[str, dict] = {
     "TOPIX":      {"source": "jquants", "code": "TOPIX",     "yfinance_ticker": "^TPX"},
-    "グロース250": {"source": "jquants", "code": "Growth250", "yfinance_ticker": "^GRWTH250"},
+    "グロース250": {"source": "jquants", "code": "Growth250", "yfinance_ticker": "2516.T"},
     "日経平均":    {"source": "yfinance", "code": "N225",     "yfinance_ticker": "^N225"},
     "S&P 500":    {"source": "yfinance", "code": "SPX",      "yfinance_ticker": "^GSPC"},
 }
