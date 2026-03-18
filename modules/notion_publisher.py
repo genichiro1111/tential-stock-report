@@ -21,14 +21,18 @@ class NotionClient:
         self.s = requests.Session()
         self.s.headers.update({"Authorization":f"Bearer {api_key}","Notion-Version":self.VERSION,"Content-Type":"application/json"})
 
-    def _req(self, method, ep, json_data=None):
+    def _req(self, method, ep, json_data=None, timeout=60):
         try:
-            r = self.s.request(method, f"{self.BASE_URL}{ep}", json=json_data, timeout=30)
+            r = self.s.request(method, f"{self.BASE_URL}{ep}", json=json_data, timeout=timeout)
             r.raise_for_status(); return r.json()
         except requests.exceptions.RequestException as e:
             logger.error(f"Notion [{method} {ep}]: {e}")
             if hasattr(e,'response') and e.response: logger.error(e.response.text[:500])
             return {}
+
+    def update_database(self, db_id, properties):
+        """DBスキーマにプロパティを追加"""
+        return self._req("PATCH", f"/databases/{db_id}", {"properties": properties})
 
     def create_database(self, parent_page_id, title, properties):
         return self._req("POST","/databases",{"parent":{"type":"page_id","page_id":parent_page_id},"title":[{"type":"text","text":{"content":title}}],"is_inline":True,"properties":properties})
@@ -155,7 +159,27 @@ class NotionReportComposer:
         blocks.append(B.divider())
         # Qualitative
         blocks.append(B.h2("定性分析（モメンタム）","💬"))
-        blocks.append(B.callout("定性分析はスケジュールタスク実行時にWebSearchで自動収集されます。\n（Yahoo掲示板センチメント・X言及・市況感サマリ）","📋"))
+        yb = self.ql.yahoo_bbs
+        if yb.post_count > 0:
+            blocks.append(B.callout(
+                f"Yahoo掲示板センチメント: {yb.trend}（投稿{yb.post_count}件）\n"
+                f"強気 {yb.bullish_pct:.0f}% / 中立 {yb.neutral_pct:.0f}% / 弱気 {yb.bearish_pct:.0f}%",
+                "🗣️", "blue_background"
+            ))
+            # Topic categories
+            if yb.topic_categories:
+                blocks.append(B.h3("トピック分析"))
+                topic_rows = [["トピック", "件数", "割合"]]
+                for tc in yb.topic_categories:
+                    topic_rows.append([tc.name, str(tc.count), f"{tc.pct:.0f}%"])
+                blocks.append(B.table(topic_rows))
+            # Notable comments
+            if yb.notable_comments:
+                blocks.append(B.h3("注目投稿"))
+                for c in yb.notable_comments[:5]:
+                    blocks.append(B.quote(c))
+        else:
+            blocks.append(B.callout("定性分析はスケジュールタスク実行時にWebSearchで自動収集されます。\n（Yahoo掲示板センチメント・X言及・市況感サマリ）","📋"))
         blocks.append(B.divider())
         # Watchpoints
         blocks.append(B.h2("来週のウォッチポイント","👁️"))
@@ -192,7 +216,10 @@ class NotionPublisher:
 
     def _ensure_database(self):
         if self.db_id:
-            logger.info(f"Using DB: {self.db_id}"); return self.db_id
+            logger.info(f"Using DB: {self.db_id}")
+            # 既存DBにレポートURLプロパティがなければ追加
+            self.client.update_database(self.db_id, {"レポートURL": {"url": {}}})
+            return self.db_id
         logger.info("Creating new database...")
         r = self.client.create_database(NOTION_PARENT_PAGE_ID, "📊 Weekly Stock Reports", DB_SCHEMA)
         if r.get("id"):

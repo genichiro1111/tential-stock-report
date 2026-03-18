@@ -38,12 +38,21 @@ class ForumPost:
     engagement: int = 0       # yes + no
 
 @dataclass
+class TopicCategory:
+    """トピックカテゴリの集計結果"""
+    name: str = ""
+    count: int = 0
+    pct: float = 0.0
+    sample_posts: List[str] = field(default_factory=list)  # 代表的な投稿（最大3件）
+
+@dataclass
 class SentimentResult:
     source: str; post_count: int = 0; post_count_prev: int = 0
     sentiment_score: float = 0.0; bullish_pct: float = 0.0
     neutral_pct: float = 0.0; bearish_pct: float = 0.0
     trend: str = "横ばい"; notable_comments: List[str] = field(default_factory=list)
     top_topics: List[str] = field(default_factory=list)
+    topic_categories: List[TopicCategory] = field(default_factory=list)
     forum_posts: List[ForumPost] = field(default_factory=list)
 
 @dataclass
@@ -76,6 +85,64 @@ BEARISH_WORDS = [
     "縮小", "悪化", "マイナス", "懸念", "リスク", "弱気", "暴落",
     "損切", "ヤバい", "クソ", "終わり", "だめ", "ダメ", "売り煽り",
 ]
+
+# ── Topic Categories ─────────────────────────────
+TOPIC_CATEGORIES = {
+    "業績・決算": ["決算", "業績", "売上", "利益", "増収", "増益", "減収", "減益", "赤字", "黒字",
+                   "営業利益", "経常", "売上高", "四半期", "通期", "上方修正", "下方修正", "予想",
+                   "成長率", "前年比", "QoQ", "YoY", "月次", "開示"],
+    "株価・テクニカル": ["チャート", "移動平均", "サポート", "レジスタンス", "出来高", "テクニカル",
+                        "底", "天井", "高値", "安値", "上値", "下値", "ブレイク", "レンジ",
+                        "RSI", "MACD", "ボリンジャー", "トレンド", "反発", "反落", "上昇",
+                        "下落", "急騰", "急落", "暴落", "暴騰", "窓", "ヨコヨコ"],
+    "需給・信用残": ["信用", "買い残", "売り残", "貸借", "空売り", "踏み上げ", "追証",
+                     "信用倍率", "逆日歩", "回転日数", "需給", "ショート", "ロング",
+                     "ナンピン", "損切", "利確", "含み損", "含み益"],
+    "事業・経営": ["BAKUNE", "バクネ", "リカバリー", "ウェルネス", "EC", "店舗", "新商品",
+                   "新規", "事業", "経営", "IR", "CEO", "社長", "上場", "IPO", "M&A",
+                   "提携", "コラボ", "海外", "展開", "戦略", "ブランド", "CM", "広告",
+                   "楽天", "Amazon", "D2C", "カテゴリ"],
+    "マクロ・市場環境": ["日経", "グロース", "市場", "金利", "為替", "円安", "円高", "利上げ",
+                         "FRB", "日銀", "インフレ", "景気", "TOPIX", "マザーズ", "指数",
+                         "米国", "ダウ", "S&P", "ナスダック", "地合い"],
+    "投資判断・売買": ["買い", "売り", "ホールド", "仕込", "買い増", "売り煽り", "ガチホ",
+                       "利確", "損切", "エントリー", "ポジション", "配当", "優待", "目標株価",
+                       "割安", "割高", "PER", "PBR", "バリュー", "グロース株"],
+}
+
+
+def _classify_topics(posts: List[ForumPost]) -> List[TopicCategory]:
+    """投稿をトピックカテゴリに分類し、集計結果を返す"""
+    cat_posts: Dict[str, List[str]] = {cat: [] for cat in TOPIC_CATEGORIES}
+
+    for p in posts:
+        matched_cats = set()
+        for cat, keywords in TOPIC_CATEGORIES.items():
+            if any(kw in p.body for kw in keywords):
+                matched_cats.add(cat)
+        if not matched_cats:
+            matched_cats.add("その他")
+        for cat in matched_cats:
+            if cat not in cat_posts:
+                cat_posts[cat] = []
+            cat_posts[cat].append(p.body)
+
+    total = max(len(posts), 1)
+    results = []
+    for cat_name in list(TOPIC_CATEGORIES.keys()) + ["その他"]:
+        post_list = cat_posts.get(cat_name, [])
+        if not post_list:
+            continue
+        results.append(TopicCategory(
+            name=cat_name,
+            count=len(post_list),
+            pct=round(len(post_list) / total * 100, 1),
+            sample_posts=[body[:80] for body in post_list[:3]],
+        ))
+
+    # Sort by count descending
+    results.sort(key=lambda x: x.count, reverse=True)
+    return results
 
 
 def _classify_sentiment(texts: List[str]) -> Dict[str, float]:
@@ -203,7 +270,10 @@ def _analyze_forum_posts(posts: List[ForumPost]) -> Dict:
     else:
         trend = "中立"
 
-    return {**sent, "notable": notable, "trend": trend}
+    # トピック分類
+    topic_categories = _classify_topics(posts)
+
+    return {**sent, "notable": notable, "trend": trend, "topic_categories": topic_categories}
 
 
 # ── Google News RSS（1週間フィルター付き） ────────
@@ -265,6 +335,7 @@ class QualitativeAnalyzer:
         report.yahoo_bbs.bearish_pct = forum_analysis["bearish"]
         report.yahoo_bbs.trend = forum_analysis["trend"]
         report.yahoo_bbs.notable_comments = forum_analysis["notable"][:5]
+        report.yahoo_bbs.topic_categories = forum_analysis.get("topic_categories", [])
         report.yahoo_bbs.forum_posts = forum_posts
 
         # ── 2. TENTIAL / BAKUNE 関連ニュース（Google News, 直近3日） ──

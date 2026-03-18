@@ -11,7 +11,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.settings import BRAND_COLORS, CATEGORY_ORDER
 from modules.quantitative import QuantReport, StockPerformance, CategoryPerformance, DailyBar
-from modules.qualitative import QualReport, NewsItem, ForumPost
+from modules.qualitative import QualReport, NewsItem, ForumPost, TopicCategory
 
 logger = logging.getLogger(__name__)
 
@@ -846,6 +846,37 @@ footer {{ text-align: center; padding: 24px; font-size: 12px; color: var(--gray)
   <div style="font-size:13px;font-weight:600;color:{badge_color}">→ {_esc(yb.trend)}</div>
 </div>"""
 
+        # Topic category analysis
+        topic_html = ""
+        topics = yb.topic_categories
+        if topics:
+            # Bar chart visualization
+            max_count = max(tc.count for tc in topics) if topics else 1
+            topic_emojis = {
+                "業績・決算": "📊", "株価・テクニカル": "📈", "需給・信用残": "⚖️",
+                "事業・経営": "🏢", "マクロ・市場環境": "🌍", "投資判断・売買": "💰", "その他": "💭",
+            }
+            bars_html = ""
+            for tc in topics:
+                emoji = topic_emojis.get(tc.name, "📌")
+                bar_w = tc.count / max_count * 100
+                # Sample posts tooltip
+                samples = " / ".join(_esc(s) for s in tc.sample_posts[:2])
+                bars_html += f"""<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+  <div style="width:130px;font-size:12px;font-weight:600;color:{NAVY};white-space:nowrap">{emoji} {_esc(tc.name)}</div>
+  <div style="flex:1;background:#eee;border-radius:4px;height:20px;overflow:hidden">
+    <div style="width:{bar_w:.0f}%;height:100%;background:linear-gradient(90deg,{NAVY},{BLUE});border-radius:4px;transition:width 0.3s"></div>
+  </div>
+  <div style="width:70px;text-align:right;font-size:12px;font-weight:700;color:{NAVY}">{tc.count}件 ({tc.pct:.0f}%)</div>
+</div>
+<div style="margin:-2px 0 8px 140px;font-size:11px;color:{GRAY};line-height:1.4">{samples}</div>"""
+
+            topic_html = f"""<div class="qual-card" style="grid-column:1/-1">
+  <h4>📋 掲示板コメント — トピック分析</h4>
+  <div style="font-size:12px;color:{GRAY};margin-bottom:12px">直近3日間の投稿 {yb.post_count}件 をトピック別に分類（1投稿が複数カテゴリに該当する場合あり）</div>
+  {bars_html}
+</div>"""
+
         # Forum notable posts
         forum_html = ""
         notable = yb.notable_comments
@@ -892,6 +923,7 @@ footer {{ text-align: center; padding: 24px; font-size: 12px; color: var(--gray)
   <div class="callout">{summary_html}</div>
   {sent_html}
   <div class="qual-grid" style="margin-top:16px">
+    {topic_html}
     {forum_html}
     {market_html}
     {tential_html}
