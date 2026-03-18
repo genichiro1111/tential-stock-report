@@ -48,6 +48,7 @@ COMPS: List[CompanyInfo] = [
     CompanyInfo("Olaplex",      "OLPX", "NASDAQ",  "Global D2C", "yfinance", "OLPX"),
     CompanyInfo("AIロボティクス", "247A", "グロース", "IPO Peers", "jquants"),
     CompanyInfo("yutori",        "5892", "グロース", "IPO Peers", "jquants"),
+    CompanyInfo("Human Made",    "456A", "グロース", "IPO Peers", "jquants"),
 ]
 
 BENCHMARKS: Dict[str, dict] = {
