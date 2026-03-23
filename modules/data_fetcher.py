@@ -518,10 +518,23 @@ class StockDataFetcher:
         for bm_name, (rows, cols) in bm_map.items():
             result["benchmarks"][bm_name] = to_df(rows, cols[:len(rows[0])] if rows else cols)
 
+        # Margin data (J-Quants format from Chrome prefetch)
+        margin_rows = raw.get("margin", [])
+        if margin_rows and isinstance(margin_rows, list) and isinstance(margin_rows[0], dict):
+            # J-Quants dict format: [{Date, Code, ShrtVol, LongVol, ...}, ...]
+            result["margin"] = pd.DataFrame(margin_rows)
+            if "Date" in result["margin"].columns:
+                result["margin"]["Date"] = pd.to_datetime(result["margin"]["Date"])
+                result["margin"] = result["margin"].sort_values("Date").reset_index(drop=True)
+            logger.info(f"  Margin data: {len(result['margin'])} rows")
+        else:
+            result["margin"] = pd.DataFrame()
+
         per_cache = self._load_per_cache()
         result["per_map"] = per_cache
         logger.info(f"✅ Prefetch loaded — TENTIAL: {len(result['tential'])} rows, "
-                    f"comps: {len(result['comps'])}, benchmarks: {len(result['benchmarks'])}")
+                    f"comps: {len(result['comps'])}, benchmarks: {len(result['benchmarks'])}, "
+                    f"margin: {len(result['margin'])} rows")
         return result
 
     def fetch_all(self) -> Dict:
