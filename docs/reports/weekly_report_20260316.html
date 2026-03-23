@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TENTIAL Weekly Stock Report — W13 (2026-03-16 〜 2026-03-20)</title>
+<style>
+:root {
+  --navy: #284B7D; --blue: #567EB0; --beige: #E4C9A5;
+  --gray: #858585; --dark: #595757; --light: #D8D9D9;
+  --red: #C94444; --green: #2E8B57;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  background: #f5f3ef; color: var(--dark); line-height: 1.6; }
+.container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+
+/* Header */
+.report-header { background: linear-gradient(315deg, var(--navy), var(--blue));
+  color: #fff; padding: 32px; border-radius: var(--radius); margin-bottom: 24px; }
+.header-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.brand { display: flex; align-items: center; gap: 16px; }
+.brand-logo { width: 48px; height: 48px; flex-shrink: 0; }
+h1 { font-size: 22px; font-weight: 700; margin: 0; }
+.subtitle { font-size: 14px; opacity: 0.8; margin-top: 2px; }
+.header-meta { display: flex; align-items: center; gap: 12px; }
+.badge { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 13px; }
+.timestamp { font-size: 12px; opacity: 0.7; }
+
+/* Week Nav Tabs */
+.week-nav { display: flex; gap: 6px; margin-bottom: 16px; padding: 4px;
+  background: #fff; border-radius: var(--radius); overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.week-tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  color: var(--gray); text-decoration: none; white-space: nowrap; transition: all 0.15s; }
+.week-tab:hover { background: #f0f0f0; color: var(--dark); }
+.week-tab.active { background: var(--navy); color: #fff; }
+
+/* Sections */
+.section { background: #fff; border-radius: var(--radius); padding: 24px;
+  margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.section-title { font-size: 16px; font-weight: 700; color: var(--navy);
+  margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--beige); display: flex; align-items: center; gap: 8px; }
+
+/* Callout */
+.callout { background: #eef3f9; border-left: 4px solid var(--blue);
+  padding: 16px 20px; border-radius: 0 8px 8px 0; margin-bottom: 16px;
+  font-size: 15px; line-height: 1.7; }
+.callout.positive { background: #fef0f0; border-left-color: var(--red); }
+.callout.negative { background: #edf7f0; border-left-color: var(--green); }
+.callout.neutral { background: #f5f5f5; border-left-color: var(--gray); }
+
+/* KPI row */
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.kpi { background: #f8f7f5; border-radius: 8px; padding: 16px; text-align: center; }
+.kpi-label { font-size: 12px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-value { font-size: 24px; font-weight: 700; color: var(--navy); margin: 4px 0; }
+.kpi-sub { font-size: 13px; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: var(--navy); color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;
+  position: sticky; top: 0; }
+th:first-child { border-radius: 8px 0 0 0; }
+th:last-child { border-radius: 0 8px 0 0; }
+td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+tr:hover td { background: #fafaf8; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.positive { color: var(--red); }
+.negative { color: var(--green); }
+.neutral { color: var(--gray); }
+.star { background: rgba(40,75,125,0.06); font-weight: 600; }
+
+/* Heatmap */
+.heatmap td { text-align: center; font-weight: 600; font-size: 13px; transition: transform 0.1s; }
+.heatmap td:hover { transform: scale(1.05); }
+.heatmap td.cat-label { text-align: left; font-weight: 700; color: var(--navy); background: transparent !important; }
+
+/* Rankings */
+.rank-item { display: flex; align-items: center; gap: 12px; padding: 8px 12px;
+  border-radius: 8px; margin-bottom: 4px; }
+.rank-item:hover { background: #f8f7f5; }
+.rank-num { width: 28px; height: 28px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+  color: #fff; flex-shrink: 0; }
+.rank-1 { background: #d4a017; }
+.rank-2 { background: #a0a0a0; }
+.rank-3 { background: #b87333; }
+.rank-other { background: #ddd; color: var(--dark); }
+.rank-name { flex: 1; font-size: 14px; }
+.rank-name .code { color: var(--gray); font-size: 12px; }
+.rank-value { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rank-bar { width: 80px; height: 6px; background: #eee; border-radius: 3px; overflow: hidden; }
+.rank-bar-fill { height: 100%; border-radius: 3px; }
+
+/* Margin table */
+.margin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.margin-card { background: #f8f7f5; border-radius: 8px; padding: 16px; }
+.margin-card h4 { font-size: 13px; color: var(--gray); margin-bottom: 8px; }
+.margin-card .val { font-size: 20px; font-weight: 700; color: var(--navy); }
+.margin-card .chg { font-size: 13px; margin-top: 4px; }
+
+/* Qualitative cards */
+.qual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.qual-card { background: #f8f7f5; border-radius: 8px; padding: 16px; }
+.qual-card h4 { font-size: 14px; color: var(--navy); margin-bottom: 8px; }
+.qual-card p { font-size: 13px; line-height: 1.6; }
+
+/* Watch list */
+.watch-item { display: flex; align-items: center; gap: 10px; padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+.watch-icon { font-size: 18px; }
+
+/* Footer */
+footer { text-align: center; padding: 24px; font-size: 12px; color: var(--gray); }
+
+@media (max-width: 640px) {
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .qual-grid { grid-template-columns: 1fr; }
+  .margin-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 18px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="report-header">
+    <div class="header-top">
+      <div class="brand">
+        <svg class="brand-logo" width="48" height="48" viewBox="760 280 410 510" xmlns="http://www.w3.org/2000/svg">
+          <rect x="760" y="290" fill="#E4C9A5" width="290.9" height="110"/>
+          <path fill="#567EB0" d="M1044.1,290c-16.5,0-24.1,9.3-24.1,24.7V400h140V290H1044.1z"/>
+          <path fill="#284B7D" d="M1036.6,290c-6.2,0-11.3,2.7-16.1,6.3L903.8,396.7c-2.4,2.1-3.8,5.1-3.8,8.3v385l120,0V314.7c0.3-14.6,9.6-21.2,14-23.1c3.4-1.4,8.1-1.6,10.2-1.7C1042.5,290,1039.2,290,1036.6,290z"/>
+        </svg>
+        <div>
+          <h1>Weekly Stock Report</h1>
+          <p class="subtitle">W13 — 2026-03-16 〜 2026-03-20</p>
+        </div>
+      </div>
+      <div class="header-meta">
+        <span class="badge">325A / グロース</span>
+        <span class="timestamp">Generated: 2026-03-23 11:42</span>
+      </div>
+    </div>
+  </header>
+  <nav class="week-nav"><a href="weekly_report_20260316.html" class="week-tab active">W12</a><a href="weekly_report_20260309.html" class="week-tab">W11</a></nav>
+  <main>
+    <div class="section">
+  <div class="section-title">🎯 Executive Summary</div>
+  <div class="callout negative">
+    TENTIAL（325A）は前週比 <strong>-7.8%</strong>（終値 ¥3,290）。
+  </div>
+  
+</div>
+<div class="section">
+  <div class="section-title">🌏 マーケット概況</div>
+  <table>
+    <thead><tr><th>指数</th><th class="num">終値</th><th class="num">週間</th><th class="num">月初来</th><th class="num">年初来</th></tr></thead>
+    <tbody><tr>
+  <td><strong>TOPIX</strong></td>
+  <td class="num">3,501</td>
+  <td class="num" style="color:#2E8B57">-0.5%</td>
+  <td class="num" style="color:#2E8B57">-11.1%</td>
+  <td class="num" style="color:#858585">0.0%</td>
+</tr><tr>
+  <td><strong>S&amp;P 500</strong></td>
+  <td class="num">5,577</td>
+  <td class="num" style="color:#2E8B57">-2.3%</td>
+  <td class="num" style="color:#2E8B57">-10.1%</td>
+  <td class="num" style="color:#858585">0.0%</td>
+</tr></tbody>
+  </table>
+  
+</div>
+<div class="section">
+  <div class="section-title">📈 <a href="https://minkabu.jp/stock/325A" target="_blank" style="color:inherit;text-decoration:none">TENTIAL（325A）パフォーマンス</a></div>
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-label">終値</div>
+      <div class="kpi-value">¥3,290</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">週間</div>
+      <div class="kpi-value" style="color:#2E8B57">-7.8%</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">月初来</div>
+      <div class="kpi-value" style="color:#2E8B57">-24.1%</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">年初来</div>
+      <div class="kpi-value" style="color:#858585">0.0%</div>
+    </div>
+  </div>
+  <div style="margin:16px 0;background:#f8f7f5;border-radius:8px;padding:16px;overflow-x:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:13px;font-weight:600;color:#284B7D">日足チャート（OHLCV）</span>
+      <div style="display:flex;gap:16px;font-size:11px;color:#858585">
+        <span>週間レンジ: ¥3,245 — ¥3,770</span>
+        <span>週平均出来高: <strong>111,600</strong></span>
+      </div>
+    </div>
+    
+<div id="sc_84000" style="position:relative;width:100%;user-select:none">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+    <div style="display:inline-flex;background:#eee;border-radius:6px;padding:2px;gap:2px" id="sc_84000_tabs">
+      <button data-mode="daily" style="padding:4px 14px;border:none;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;background:#284B7D;color:#fff">日足</button>
+      <button data-mode="weekly" style="padding:4px 14px;border:none;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:#858585">週足</button>
+      <button data-mode="monthly" style="padding:4px 14px;border:none;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:#858585">月足</button>
+    </div>
+    <div id="sc_84000_tip" style="flex:1;font-size:12px;color:#284B7D;line-height:1.5;min-height:20px"></div>
+  </div>
+  <div style="position:relative">
+    <canvas id="sc_84000_cv" style="width:100%;cursor:crosshair"></canvas>
+    <div id="sc_84000_vline" style="display:none;position:absolute;top:0;width:1px;background:rgba(40,75,125,0.25);pointer-events:none"></div>
+  </div>
+</div>
+<script>
+(function(){
+  var datasets={daily:[{"d": "2026-03-04", "o": 4125, "h": 4125, "l": 4125, "c": 4125, "v": 0}, {"d": "2026-03-05", "o": 4120, "h": 4120, "l": 4120, "c": 4120, "v": 0}, {"d": "2026-03-06", "o": 4210, "h": 4210, "l": 4210, "c": 4210, "v": 0}, {"d": "2026-03-07", "o": 4185, "h": 4185, "l": 4185, "c": 4185, "v": 0}, {"d": "2026-03-08", "o": 4335, "h": 4335, "l": 4335, "c": 4335, "v": 0}, {"d": "2026-03-09", "o": 4200, "h": 4200, "l": 4200, "c": 4200, "v": 0}, {"d": "2026-03-10", "o": 3925, "h": 3925, "l": 3925, "c": 3925, "v": 0}, {"d": "2026-03-11", "o": 3690, "h": 3690, "l": 3690, "c": 3690, "v": 0}, {"d": "2026-03-12", "o": 3830, "h": 3830, "l": 3830, "c": 3830, "v": 0}, {"d": "2026-03-13", "o": 3945, "h": 3945, "l": 3945, "c": 3945, "v": 0}, {"d": "2026-03-14", "o": 3790, "h": 3790, "l": 3790, "c": 3790, "v": 0}, {"d": "2026-03-15", "o": 3890, "h": 3890, "l": 3890, "c": 3890, "v": 0}, {"d": "2026-03-16", "o": 3910, "h": 3910, "l": 3910, "c": 3910, "v": 0}, {"d": "2026-03-17", "o": 3775, "h": 3775, "l": 3775, "c": 3775, "v": 0}, {"d": "2026-03-18", "o": 3770, "h": 3770, "l": 3770, "c": 3770, "v": 0}, {"d": "2026-03-19", "o": 3675, "h": 3675, "l": 3675, "c": 3675, "v": 0}, {"d": "2026-03-20", "o": 3615, "h": 3615, "l": 3615, "c": 3615, "v": 0}, {"d": "2026-03-21", "o": 3770, "h": 3770, "l": 3770, "c": 3770, "v": 0}, {"d": "2026-03-22", "o": 3475, "h": 3475, "l": 3475, "c": 3475, "v": 0}, {"d": "2026-03-23", "o": 3290, "h": 3290, "l": 3290, "c": 3290, "v": 0}],weekly:[],monthly:[]};
+  var mode="daily";
+  var D=datasets.daily;
+  var cv=document.getElementById("sc_84000_cv");
+  var tip=document.getElementById("sc_84000_tip");
+  var vline=document.getElementById("sc_84000_vline");
+  var tabs=document.getElementById("sc_84000_tabs");
+  var dpr=window.devicePixelRatio||1;
+
+  // Tab switching
+  tabs.querySelectorAll("button").forEach(function(btn){
+    btn.addEventListener("click",function(){
+      var m=this.getAttribute("data-mode");
+      if(m===mode||!datasets[m]||datasets[m].length<2) return;
+      mode=m; D=datasets[m];
+      tabs.querySelectorAll("button").forEach(function(b){
+        b.style.background=b.getAttribute("data-mode")===mode?"#284B7D":"transparent";
+        b.style.color=b.getAttribute("data-mode")===mode?"#fff":"#858585";
+      });
+      tip.innerHTML="";
+      resize();
+    });
+  });
+
+  function resize(){
+    var w=cv.parentElement.clientWidth;
+    cv.width=w*dpr; cv.height=300*dpr;
+    cv.style.height="300px";
+    draw(-1);
+  }
+  function fmt(v){ return "¥"+v.toLocaleString("ja-JP",{maximumFractionDigits:0}) }
+  function fmtV(v){ return v>=1e6?(v/1e6).toFixed(1)+"M":v>=1e3?(v/1e3).toFixed(0)+"K":v.toString() }
+
+  function draw(hi){
+    var ctx=cv.getContext("2d");
+    var W=cv.width, H=cv.height;
+    var padL=55*dpr, padR=10*dpr, padT=10*dpr;
+    var priceH=210*dpr, volH=55*dpr, gapH=10*dpr;
+    var cW=W-padL-padR, n=D.length;
+    ctx.clearRect(0,0,W,H);
+    // ranges
+    var pMax=-Infinity,pMin=Infinity,vMax=0;
+    for(var i=0;i<n;i++){ if(D[i].h>pMax)pMax=D[i].h; if(D[i].l<pMin)pMin=D[i].l; if(D[i].v>vMax)vMax=D[i].v; }
+    pMax*=1.01; pMin*=0.99; var pR=pMax-pMin||1; vMax=vMax||1;
+    function py(p){ return padT+(1-(p-pMin)/pR)*priceH; }
+    function vy(v){ return padT+priceH+gapH+volH-(v/vMax)*volH; }
+    var bW=Math.max(3*dpr,Math.min(14*dpr,(cW/n)-2*dpr));
+    var gap=(cW-bW*n)/Math.max(n-1,1);
+    // grid
+    ctx.strokeStyle="#eee"; ctx.lineWidth=1*dpr;
+    ctx.fillStyle="#858585"; ctx.font=(10*dpr)+"px -apple-system,sans-serif"; ctx.textAlign="right";
+    for(var g=0;g<5;g++){
+      var gy=padT+g*priceH/4; var gp=pMax-g*pR/4;
+      ctx.beginPath(); ctx.moveTo(padL,gy); ctx.lineTo(W-padR,gy); ctx.stroke();
+      ctx.fillText(fmt(gp),padL-4*dpr,gy+4*dpr);
+    }
+    // volume avg line
+    var avgV=0; for(var i=0;i<n;i++) avgV+=D[i].v; avgV/=n;
+    var avy=vy(avgV);
+    ctx.setLineDash([4*dpr,3*dpr]); ctx.strokeStyle="#567EB0"; ctx.globalAlpha=0.4;
+    ctx.beginPath(); ctx.moveTo(padL,avy); ctx.lineTo(W-padR,avy); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha=1;
+    ctx.fillStyle="#567EB0"; ctx.font=(9*dpr)+"px -apple-system,sans-serif"; ctx.textAlign="end";
+    var avgLabel=mode==="daily"?"日平均":mode==="weekly"?"週平均":"月平均";
+    ctx.fillText(avgLabel+" "+fmtV(avgV),W-padR,avy-3*dpr);
+    // candles + volume
+    for(var i=0;i<n;i++){
+      var b=D[i]; var cx=padL+i*(bW+gap)+bW/2;
+      var up=b.c>=b.o; var col=up?"#C94444":"#2E8B57";
+      // volume bar
+      var vt=vy(b.v), vb=vy(0);
+      ctx.fillStyle=up?"rgba(40,75,125,0.25)":"rgba(40,75,125,0.12)";
+      ctx.fillRect(cx-bW/2,vt,bW,vb-vt);
+      // wick
+      ctx.strokeStyle=col; ctx.lineWidth=1*dpr;
+      ctx.beginPath(); ctx.moveTo(cx,py(b.h)); ctx.lineTo(cx,py(b.l)); ctx.stroke();
+      // body
+      var yt=py(Math.max(b.o,b.c)), yb=py(Math.min(b.o,b.c));
+      var bh=Math.max(yb-yt,1*dpr);
+      if(up){ ctx.fillStyle="#fff"; ctx.fillRect(cx-bW/2,yt,bW,bh); ctx.strokeRect(cx-bW/2,yt,bW,bh); }
+      else{ ctx.fillStyle=col; ctx.fillRect(cx-bW/2,yt,bW,bh); }
+      // highlight
+      if(i===hi){
+        ctx.fillStyle="rgba(40,75,125,0.06)";
+        ctx.fillRect(cx-bW/2-2*dpr,padT,bW+4*dpr,priceH+gapH+volH);
+      }
+      // date labels
+      var showL=(n<=15)||(i%Math.max(1,Math.floor(n/8))===0)||(i===n-1);
+      if(showL){
+        ctx.fillStyle="#858585"; ctx.font=(9*dpr)+"px -apple-system,sans-serif"; ctx.textAlign="center";
+        ctx.fillText(b.d,cx,padT+priceH+gapH+volH+14*dpr);
+      }
+    }
+  }
+  // hover
+  cv.addEventListener("mousemove",function(e){
+    var rect=cv.getBoundingClientRect();
+    var mx=(e.clientX-rect.left)*dpr;
+    var padL=55*dpr, padR=10*dpr, cW=cv.width-padL-padR, n=D.length;
+    var bW=Math.max(3*dpr,Math.min(14*dpr,(cW/n)-2*dpr));
+    var gap=(cW-bW*n)/Math.max(n-1,1);
+    var idx=Math.floor((mx-padL)/(bW+gap));
+    if(idx<0||idx>=n){ tip.innerHTML=""; vline.style.display="none"; draw(-1); return; }
+    var b=D[idx]; var chg=b.c-b.o, chgPct=b.o?((chg/b.o)*100):0;
+    var sign=chg>=0?"+":""; var col=chg>=0?"#C94444":"#2E8B57";
+    tip.innerHTML='<span style="font-weight:700">'+b.d+'</span>　'+
+      '<span style="color:#858585">始</span> '+fmt(b.o)+
+      '　<span style="color:#858585">高</span> '+fmt(b.h)+
+      '　<span style="color:#858585">安</span> '+fmt(b.l)+
+      '　<span style="color:#858585">終</span> <b style="color:'+col+'">'+fmt(b.c)+'</b>'+
+      '　<span style="color:'+col+'">'+sign+chg.toFixed(0)+' ('+sign+chgPct.toFixed(1)+'%)</span>'+
+      '　<span style="color:#858585">出来高</span> '+fmtV(b.v);
+    var rx=(e.clientX-rect.left);
+    vline.style.left=rx+"px"; vline.style.display="block"; vline.style.height=cv.style.height;
+    draw(idx);
+  });
+  cv.addEventListener("mouseleave",function(){ tip.innerHTML=""; vline.style.display="none"; draw(-1); });
+  window.addEventListener("resize",resize);
+  resize();
+})();
+</script>
+  </div>
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-label">週間レンジ</div>
+      <div class="kpi-value" style="font-size:18px">¥3,245 — ¥3,770</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">売買代金（週平均）</div>
+      <div class="kpi-value" style="font-size:18px">N/A</div>
+      <div class="kpi-sub" style="color:#858585">前週比 N/A</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">出来高（週平均）</div>
+      <div class="kpi-value" style="font-size:18px">111,600</div>
+    </div>
+  </div>
+</div>
+<div class="section">
+  <div class="section-title">🔥 Comps ヒートマップ</div>
+  <div style="overflow-x:auto">
+  <table class="heatmap">
+    <thead><tr><th>カテゴリ</th><th>銘柄</th><th class="num">終値</th><th class="num">週間</th><th class="num">月初来</th><th class="num">年初来</th><th class="num">PER</th><th class="num">出来高(週平均)</th></tr></thead>
+    <tbody><tr class="star">
+  <td class="cat-label">自社</td>
+  <td><a href="https://minkabu.jp/stock/325A" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">TENTIAL ⭐</a> <span style="color:#858585;font-size:11px">325A</span></td>
+  <td class="num">¥3,290</td>
+  <td class="num" style="background:rgba(46,139,87,0.35);color:#2E8B57">-7.8%</td>
+  <td class="num" style="background:rgba(46,139,87,0.35);color:#2E8B57">-24.1%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#2E8B57;font-weight:600">13.2x</td>
+  <td class="num" style="font-size:11px;color:#858585">111,600</td>
+</tr><tr>
+  <td class="cat-label">Domestic EC</td>
+  <td><a href="https://minkabu.jp/stock/3182" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">Oisix</a> <span style="color:#858585;font-size:11px">3182</span></td>
+  <td class="num">¥1,325</td>
+  <td class="num" style="background:rgba(46,139,87,0.12);color:#2E8B57">-1.8%</td>
+  <td class="num" style="background:rgba(46,139,87,0.35);color:#2E8B57">-7.4%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#2E8B57;font-weight:600">11.8x</td>
+  <td class="num" style="font-size:11px;color:#858585">136,860</td>
+</tr><tr>
+  <td class="cat-label"></td>
+  <td><a href="https://minkabu.jp/stock/2930" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">北の達人</a> <span style="color:#858585;font-size:11px">2930</span></td>
+  <td class="num">¥122</td>
+  <td class="num" style="background:rgba(46,139,87,0.11);color:#2E8B57">-1.6%</td>
+  <td class="num" style="background:rgba(46,139,87,0.35);color:#2E8B57">-10.3%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#858585;font-weight:600">27.8x</td>
+  <td class="num" style="font-size:11px;color:#858585">785,375</td>
+</tr><tr>
+  <td class="cat-label"></td>
+  <td><a href="https://minkabu.jp/stock/4933" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">I-ne</a> <span style="color:#858585;font-size:11px">4933</span></td>
+  <td class="num">¥1,056</td>
+  <td class="num" style="background:rgba(201,68,68,0.19);color:#C94444">+2.8%</td>
+  <td class="num" style="background:rgba(46,139,87,0.35);color:#2E8B57">-6.2%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#2E8B57;font-weight:600">9.3x</td>
+  <td class="num" style="font-size:11px;color:#858585">191,345</td>
+</tr><tr>
+  <td class="cat-label">Sports Apparel</td>
+  <td><a href="https://minkabu.jp/stock/7936" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">アシックス</a> <span style="color:#858585;font-size:11px">7936</span></td>
+  <td class="num">¥4,221</td>
+  <td class="num" style="background:rgba(46,139,87,0.09);color:#2E8B57">-1.3%</td>
+  <td class="num" style="background:rgba(46,139,87,0.35);color:#2E8B57">-11.9%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#858585;font-weight:600">28.4x</td>
+  <td class="num" style="font-size:11px;color:#858585">3,761,905</td>
+</tr><tr>
+  <td class="cat-label"></td>
+  <td><a href="https://minkabu.jp/stock/8111" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">ゴールドウイン</a> <span style="color:#858585;font-size:11px">8111</span></td>
+  <td class="num">¥2,281</td>
+  <td class="num" style="background:rgba(201,68,68,0.01);color:#858585">+0.1%</td>
+  <td class="num" style="background:rgba(46,139,87,0.35);color:#2E8B57">-7.5%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#2E8B57;font-weight:600">12.7x</td>
+  <td class="num" style="font-size:11px;color:#858585">494,875</td>
+</tr><tr>
+  <td class="cat-label">Wellness</td>
+  <td><a href="https://minkabu.jp/stock/7806" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">MTG</a> <span style="color:#858585;font-size:11px">7806</span></td>
+  <td class="num">¥5,800</td>
+  <td class="num" style="background:rgba(46,139,87,0.12);color:#2E8B57">-1.8%</td>
+  <td class="num" style="background:rgba(201,68,68,0.06);color:#C94444">+0.9%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#858585;font-weight:600">25.3x</td>
+  <td class="num" style="font-size:11px;color:#858585">197,950</td>
+</tr><tr>
+  <td class="cat-label"></td>
+  <td><a href="https://minkabu.jp/stock/6630" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">ヤーマン</a> <span style="color:#858585;font-size:11px">6630</span></td>
+  <td class="num">¥688</td>
+  <td class="num" style="background:rgba(201,68,68,0.10);color:#C94444">+1.5%</td>
+  <td class="num" style="background:rgba(46,139,87,0.21);color:#2E8B57">-3.0%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#C94444;font-weight:600">104.0x</td>
+  <td class="num" style="font-size:11px;color:#858585">116,785</td>
+</tr><tr>
+  <td class="cat-label">Global D2C</td>
+  <td><a href="https://us.minkabu.jp/stocks/FIGS" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">FIGS</a> <span style="color:#858585;font-size:11px">FIGS</span></td>
+  <td class="num">$14.21</td>
+  <td class="num" style="background:rgba(46,139,87,0.30);color:#2E8B57">-4.3%</td>
+  <td class="num" style="background:rgba(46,139,87,0.35);color:#2E8B57">-8.0%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#C94444;font-weight:600">75.8x</td>
+  <td class="num" style="font-size:11px;color:#858585">—</td>
+</tr><tr>
+  <td class="cat-label"></td>
+  <td><a href="https://us.minkabu.jp/stocks/YETI" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">YETI</a> <span style="color:#858585;font-size:11px">YETI</span></td>
+  <td class="num">$35.50</td>
+  <td class="num" style="background:rgba(46,139,87,0.19);color:#2E8B57">-2.7%</td>
+  <td class="num" style="background:rgba(46,139,87,0.35);color:#2E8B57">-18.8%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#858585;font-weight:600">18.5x</td>
+  <td class="num" style="font-size:11px;color:#858585">—</td>
+</tr><tr>
+  <td class="cat-label"></td>
+  <td><a href="https://us.minkabu.jp/stocks/ONON" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">On Holdings</a> <span style="color:#858585;font-size:11px">ONON</span></td>
+  <td class="num">$37.66</td>
+  <td class="num" style="background:rgba(46,139,87,0.06);color:#2E8B57">-0.9%</td>
+  <td class="num" style="background:rgba(46,139,87,0.35);color:#2E8B57">-19.0%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#C94444;font-weight:600">51.7x</td>
+  <td class="num" style="font-size:11px;color:#858585">—</td>
+</tr><tr>
+  <td class="cat-label"></td>
+  <td><a href="https://us.minkabu.jp/stocks/LULU" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">lululemon</a> <span style="color:#858585;font-size:11px">LULU</span></td>
+  <td class="num">¥163</td>
+  <td class="num" style="background:rgba(201,68,68,0.22);color:#C94444">+3.2%</td>
+  <td class="num" style="background:rgba(46,139,87,0.35);color:#2E8B57">-12.1%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#2E8B57;font-weight:600">11.1x</td>
+  <td class="num" style="font-size:11px;color:#858585">—</td>
+</tr><tr>
+  <td class="cat-label"></td>
+  <td><a href="https://us.minkabu.jp/stocks/OLPX" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">Olaplex</a> <span style="color:#858585;font-size:11px">OLPX</span></td>
+  <td class="num">$1.33</td>
+  <td class="num" style="background:rgba(201,68,68,0.35);color:#C94444">+10.8%</td>
+  <td class="num" style="background:rgba(46,139,87,0.35);color:#2E8B57">-17.4%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#2E8B57;font-weight:600">12.5x</td>
+  <td class="num" style="font-size:11px;color:#858585">—</td>
+</tr><tr>
+  <td class="cat-label">IPO Peers</td>
+  <td><a href="https://minkabu.jp/stock/5892" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">yutori</a> <span style="color:#858585;font-size:11px">5892</span></td>
+  <td class="num">¥1,984</td>
+  <td class="num" style="background:rgba(46,139,87,0.35);color:#2E8B57">-6.4%</td>
+  <td class="num" style="background:rgba(46,139,87,0.35);color:#2E8B57">-15.1%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#858585;font-weight:600">28.4x</td>
+  <td class="num" style="font-size:11px;color:#858585">71,990</td>
+</tr><tr>
+  <td class="cat-label"></td>
+  <td><a href="https://minkabu.jp/stock/247A" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">AIロボティクス</a> <span style="color:#858585;font-size:11px">247A</span></td>
+  <td class="num">¥1,219</td>
+  <td class="num" style="background:rgba(46,139,87,0.21);color:#2E8B57">-3.0%</td>
+  <td class="num" style="background:rgba(46,139,87,0.28);color:#2E8B57">-4.0%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#858585;font-weight:600">24.2x</td>
+  <td class="num" style="font-size:11px;color:#858585">1,364,180</td>
+</tr><tr>
+  <td class="cat-label"></td>
+  <td><a href="https://minkabu.jp/stock/456A" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted #858585" title="みんかぶで見る">Human Made</a> <span style="color:#858585;font-size:11px">456A</span></td>
+  <td class="num">¥4,505</td>
+  <td class="num" style="background:rgba(201,68,68,0.35);color:#C94444">+22.5%</td>
+  <td class="num" style="background:rgba(201,68,68,0.35);color:#C94444">+39.5%</td>
+  <td class="num" style="background:transparent;color:#858585">0.0%</td>
+  <td class="num" style="font-size:12px;color:#858585;font-weight:600">—</td>
+  <td class="num" style="font-size:11px;color:#858585">190,230</td>
+</tr></tbody>
+  </table>
+  </div>
+</div>
+<div class="section">
+  <div class="section-title">📊 週間騰落率ランキング</div>
+  <div class="rank-item">
+  <div class="rank-num rank-1">1</div>
+  <div class="rank-name"><a href="https://minkabu.jp/stock/456A" target="_blank" style="color:inherit;text-decoration:none">Human Made</a> <span class="code">456A</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:100%;background:#C94444"></div></div>
+  <div class="rank-value" style="color:#C94444">+22.5%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-2">2</div>
+  <div class="rank-name"><a href="https://us.minkabu.jp/stocks/OLPX" target="_blank" style="color:inherit;text-decoration:none">Olaplex</a> <span class="code">OLPX</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:48%;background:#C94444"></div></div>
+  <div class="rank-value" style="color:#C94444">+10.8%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-3">3</div>
+  <div class="rank-name"><a href="https://us.minkabu.jp/stocks/LULU" target="_blank" style="color:inherit;text-decoration:none">lululemon</a> <span class="code">LULU</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:14%;background:#C94444"></div></div>
+  <div class="rank-value" style="color:#C94444">+3.2%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-other">4</div>
+  <div class="rank-name"><a href="https://minkabu.jp/stock/4933" target="_blank" style="color:inherit;text-decoration:none">I-ne</a> <span class="code">4933</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:12%;background:#C94444"></div></div>
+  <div class="rank-value" style="color:#C94444">+2.8%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-other">5</div>
+  <div class="rank-name"><a href="https://minkabu.jp/stock/6630" target="_blank" style="color:inherit;text-decoration:none">ヤーマン</a> <span class="code">6630</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:7%;background:#C94444"></div></div>
+  <div class="rank-value" style="color:#C94444">+1.5%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-other">6</div>
+  <div class="rank-name"><a href="https://minkabu.jp/stock/8111" target="_blank" style="color:inherit;text-decoration:none">ゴールドウイン</a> <span class="code">8111</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:1%;background:#C94444"></div></div>
+  <div class="rank-value" style="color:#858585">+0.1%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-other">7</div>
+  <div class="rank-name"><a href="https://us.minkabu.jp/stocks/ONON" target="_blank" style="color:inherit;text-decoration:none">On Holdings</a> <span class="code">ONON</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:4%;background:#2E8B57"></div></div>
+  <div class="rank-value" style="color:#2E8B57">-0.9%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-other">8</div>
+  <div class="rank-name"><a href="https://minkabu.jp/stock/7936" target="_blank" style="color:inherit;text-decoration:none">アシックス</a> <span class="code">7936</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:6%;background:#2E8B57"></div></div>
+  <div class="rank-value" style="color:#2E8B57">-1.3%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-other">9</div>
+  <div class="rank-name"><a href="https://minkabu.jp/stock/2930" target="_blank" style="color:inherit;text-decoration:none">北の達人</a> <span class="code">2930</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:7%;background:#2E8B57"></div></div>
+  <div class="rank-value" style="color:#2E8B57">-1.6%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-other">10</div>
+  <div class="rank-name"><a href="https://minkabu.jp/stock/7806" target="_blank" style="color:inherit;text-decoration:none">MTG</a> <span class="code">7806</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:8%;background:#2E8B57"></div></div>
+  <div class="rank-value" style="color:#2E8B57">-1.8%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-other">11</div>
+  <div class="rank-name"><a href="https://minkabu.jp/stock/3182" target="_blank" style="color:inherit;text-decoration:none">Oisix</a> <span class="code">3182</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:8%;background:#2E8B57"></div></div>
+  <div class="rank-value" style="color:#2E8B57">-1.8%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-other">12</div>
+  <div class="rank-name"><a href="https://us.minkabu.jp/stocks/YETI" target="_blank" style="color:inherit;text-decoration:none">YETI</a> <span class="code">YETI</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:12%;background:#2E8B57"></div></div>
+  <div class="rank-value" style="color:#2E8B57">-2.7%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-other">13</div>
+  <div class="rank-name"><a href="https://minkabu.jp/stock/247A" target="_blank" style="color:inherit;text-decoration:none">AIロボティクス</a> <span class="code">247A</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:13%;background:#2E8B57"></div></div>
+  <div class="rank-value" style="color:#2E8B57">-3.0%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-other">14</div>
+  <div class="rank-name"><a href="https://us.minkabu.jp/stocks/FIGS" target="_blank" style="color:inherit;text-decoration:none">FIGS</a> <span class="code">FIGS</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:19%;background:#2E8B57"></div></div>
+  <div class="rank-value" style="color:#2E8B57">-4.3%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-other">15</div>
+  <div class="rank-name"><a href="https://minkabu.jp/stock/5892" target="_blank" style="color:inherit;text-decoration:none">yutori</a> <span class="code">5892</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:28%;background:#2E8B57"></div></div>
+  <div class="rank-value" style="color:#2E8B57">-6.4%</div>
+</div><div class="rank-item">
+  <div class="rank-num rank-other">16</div>
+  <div class="rank-name"><a href="https://minkabu.jp/stock/325A" target="_blank" style="color:inherit;text-decoration:none">TENTIAL ⭐</a> <span class="code">325A</span></div>
+  <div class="rank-bar"><div class="rank-bar-fill" style="width:35%;background:#2E8B57"></div></div>
+  <div class="rank-value" style="color:#2E8B57">-7.8%</div>
+</div>
+</div>
+<div class="section">
+  <div class="section-title">🏷️ カテゴリ別サマリ</div>
+  <table>
+    <thead><tr><th>カテゴリ</th><th class="num">週間平均</th><th class="num">月初来</th><th class="num">年初来</th><th>Best</th><th>Worst</th></tr></thead>
+    <tbody><tr>
+  <td><strong>Domestic EC</strong></td>
+  <td class="num" style="color:#858585">-0.2%</td>
+  <td class="num" style="color:#2E8B57">-8.0%</td>
+  <td class="num" style="color:#858585">0.0%</td>
+  <td>I-ne</td>
+  <td>Oisix</td>
+</tr><tr>
+  <td><strong>Sports Apparel</strong></td>
+  <td class="num" style="color:#2E8B57">-0.6%</td>
+  <td class="num" style="color:#2E8B57">-9.7%</td>
+  <td class="num" style="color:#858585">0.0%</td>
+  <td>ゴールドウイン</td>
+  <td>アシックス</td>
+</tr><tr>
+  <td><strong>Wellness</strong></td>
+  <td class="num" style="color:#858585">-0.1%</td>
+  <td class="num" style="color:#2E8B57">-1.0%</td>
+  <td class="num" style="color:#858585">0.0%</td>
+  <td>ヤーマン</td>
+  <td>MTG</td>
+</tr><tr>
+  <td><strong>Global D2C</strong></td>
+  <td class="num" style="color:#C94444">+1.2%</td>
+  <td class="num" style="color:#2E8B57">-15.1%</td>
+  <td class="num" style="color:#858585">0.0%</td>
+  <td>Olaplex</td>
+  <td>FIGS</td>
+</tr><tr>
+  <td><strong>IPO Peers</strong></td>
+  <td class="num" style="color:#C94444">+4.4%</td>
+  <td class="num" style="color:#C94444">+6.8%</td>
+  <td class="num" style="color:#858585">0.0%</td>
+  <td>Human Made</td>
+  <td>yutori</td>
+</tr></tbody>
+  </table>
+</div>
+<div class="section">
+  <div class="section-title">⚖️ 需給分析（TENTIAL 信用残）</div>
+  <div class="callout neutral">信用残データは取得後に自動表示されます。</div>
+</div>
+<div class="section">
+  <div class="section-title">💬 定性分析（マーケットインテリジェンス）</div>
+  <div class="callout neutral" style="text-align:center;padding:32px">
+    <div style="font-size:32px;margin-bottom:12px">🔄</div>
+    <strong>定性データは定期実行時に自動収集されます</strong>
+  </div>
+</div>
+
+  </main>
+  <footer>
+    <p>📊 TENTIAL IR — Weekly Stock Performance Report（自動生成）</p>
+  </footer>
+</div>
+</body>
+</html>
