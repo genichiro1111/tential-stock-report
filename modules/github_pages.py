@@ -103,13 +103,17 @@ def _update_manifest():
 
 def git_push_pages(commit_msg: Optional[str] = None) -> bool:
     """
-    docs/の変更をgit commit & push（オプション）
-    ローカルPCで実行する前提。サンドボックスではスキップ。
+    docs/の変更をgit commit & push
+    GITHUB_TOKEN が .env にあれば PAT 認証で自動push。なければスキップ。
     """
-    import subprocess
+    import subprocess, os
+    from dotenv import load_dotenv
+    load_dotenv(SRC_ROOT / ".env")
 
     if commit_msg is None:
         commit_msg = f"📊 Weekly report update — {datetime.now():%Y-%m-%d}"
+
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
 
     try:
         # docs/ のみステージ
@@ -130,11 +134,23 @@ def git_push_pages(commit_msg: Optional[str] = None) -> bool:
             cwd=str(SRC_ROOT),
             check=True,
         )
-        subprocess.run(
-            ["git", "push"],
-            cwd=str(SRC_ROOT),
-            check=True,
-        )
+
+        if token:
+            # PAT をリモートURLに埋め込んでpush（認証ダイアログ不要）
+            remote_url = subprocess.run(
+                ["git", "remote", "get-url", "origin"],
+                cwd=str(SRC_ROOT), capture_output=True, text=True
+            ).stdout.strip()
+            # https://github.com/... → https://{token}@github.com/...
+            auth_url = remote_url.replace("https://", f"https://{token}@")
+            subprocess.run(
+                ["git", "push", auth_url, "HEAD:main"],
+                cwd=str(SRC_ROOT), check=True, capture_output=True
+            )
+        else:
+            logger.warning("GITHUB_TOKEN not set — attempting push without auth (may fail)")
+            subprocess.run(["git", "push"], cwd=str(SRC_ROOT), check=True)
+
         logger.info("✅ git push complete — GitHub Pages will update shortly")
         return True
     except FileNotFoundError:

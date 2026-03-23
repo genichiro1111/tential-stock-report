@@ -391,8 +391,8 @@ class StockDataFetcher:
 
     def _get_date_range(self):
         today = datetime.date.today()
-        days_since_friday = (today.weekday() - 4) % 7
-        end_date = today - datetime.timedelta(days=days_since_friday)
+        # データは今日まで取得（最新の株価をチャートに反映するため）
+        end_date = today
         start_date = end_date - datetime.timedelta(weeks=REPORT_LOOKBACK_WEEKS)
         return start_date.isoformat(), end_date.isoformat()
 
@@ -450,10 +450,89 @@ class StockDataFetcher:
             logger.info(f"  {code}: data up to date ({last_date.date()})")
         return df
 
+    @staticmethod
+    def _get_prefetch_path() -> Path:
+        """今日付きのChrome経由プリフェッチファイルパスを返す"""
+        today = datetime.date.today().strftime("%Y%m%d")
+        return Path(__file__).resolve().parent.parent / "cache" / f"chrome_prefetch_{today}.json"
+
+    def _load_from_prefetch(self, path: Path, week_start: str, week_end: str, from_date: str, to_date: str) -> Dict:
+        """Chrome経由で取得・保存されたプリフェッチJSONから fetch_all() と同じ構造のdictを生成する。
+        プリフェッチ形式:
+          {
+            "jp_stocks":  { "325A": [[date,O,H,L,C,Vol], ...], ... },
+            "topix":       [[date,O,H,L,C], ...],
+            "indices":    { "Growth250": [[date,O,H,L,C], ...], "N225": [...] },
+            "us_stocks":  { "ONON": [[date,O,H,L,C,Vol], ...], ... },
+            "spx":         [[date,O,H,L,C], ...]
+          }
+        """
+        logger.info(f"📂 Chrome prefetch found: {path.name} — skipping live API calls")
+        raw = json.loads(path.read_text(encoding="utf-8"))
+
+        def to_df(rows, cols):
+            if not rows:
+                return pd.DataFrame()
+            df = pd.DataFrame(rows, columns=cols)
+            df["Date"] = pd.to_datetime(df["Date"])
+            return df.sort_values("Date").reset_index(drop=True)
+
+        ohlcv   = ["Date", "Open", "High", "Low", "Close", "Volume"]
+        ohlc    = ["Date", "Open", "High", "Low", "Close"]
+
+        result = {
+            "tential":   pd.DataFrame(),
+            "comps":     {},
+            "benchmarks": {},
+            "margin":    pd.DataFrame(),
+            "metadata":  {
+                "from_date": from_date, "to_date": to_date,
+                "week_start": week_start, "week_end": week_end,
+                "generated_at": datetime.datetime.now().isoformat(),
+                "source": "chrome_prefetch",
+            },
+        }
+
+        # JP stocks (J-Quants compact: [date, O, H, L, C, Vo])
+        jp = raw.get("jp_stocks", {})
+        tential_rows = jp.get("325A", [])
+        result["tential"] = to_df(tential_rows, ohlcv)
+
+        from config.settings import COMPS, BENCHMARKS
+        name_to_code = {c.name: c.code for c in COMPS}
+        for comp in COMPS:
+            rows = jp.get(comp.code) or raw.get("us_stocks", {}).get(comp.code)
+            if rows:
+                cols = ohlcv if len(rows[0]) >= 6 else ohlc
+                result["comps"][comp.name] = to_df(rows, cols[:len(rows[0])])
+            else:
+                result["comps"][comp.name] = pd.DataFrame()
+
+        # Benchmarks
+        bm_map = {
+            "TOPIX":     (raw.get("topix",   []), ohlc),
+            "グロース250": (raw.get("indices", {}).get("Growth250", []), ohlc),
+            "日経平均":   (raw.get("indices", {}).get("N225",       []), ohlcv),
+            "S&P 500":   (raw.get("spx",     []), ohlcv),
+        }
+        for bm_name, (rows, cols) in bm_map.items():
+            result["benchmarks"][bm_name] = to_df(rows, cols[:len(rows[0])] if rows else cols)
+
+        per_cache = self._load_per_cache()
+        result["per_map"] = per_cache
+        logger.info(f"✅ Prefetch loaded — TENTIAL: {len(result['tential'])} rows, "
+                    f"comps: {len(result['comps'])}, benchmarks: {len(result['benchmarks'])}")
+        return result
+
     def fetch_all(self) -> Dict:
         from_date, to_date = self._get_date_range()
         week_start, week_end = self._get_current_week_range()
         logger.info(f"Fetching: {from_date} → {to_date}, week: {week_start} → {week_end}")
+
+        # ── Chrome プリフェッチ（VMプロキシをバイパス済みのデータ）があれば優先使用 ──
+        prefetch_path = self._get_prefetch_path()
+        if prefetch_path.exists():
+            return self._load_from_prefetch(prefetch_path, week_start, week_end, from_date, to_date)
 
         result = {"tential": pd.DataFrame(), "comps": {}, "benchmarks": {},
                   "margin": pd.DataFrame(),

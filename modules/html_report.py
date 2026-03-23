@@ -443,11 +443,20 @@ footer {{ text-align: center; padding: 24px; font-size: 12px; color: var(--gray)
             return '<div class="callout neutral" style="text-align:center">日足データなし</div>'
 
         import json
+        class _NumpyEncoder(json.JSONEncoder):
+            def default(self, obj):
+                try:
+                    import numpy as np
+                    if isinstance(obj, (np.integer,)): return int(obj)
+                    if isinstance(obj, (np.floating,)): return float(obj)
+                except ImportError:
+                    pass
+                return super().default(obj)
         def _serialize(bars):
             return json.dumps([{
-                "d": b.date, "o": round(b.open, 1), "h": round(b.high, 1),
-                "l": round(b.low, 1), "c": round(b.close, 1), "v": b.volume
-            } for b in bars])
+                "d": b.date, "o": round(float(b.open), 1), "h": round(float(b.high), 1),
+                "l": round(float(b.low), 1), "c": round(float(b.close), 1), "v": int(b.volume) if b.volume else 0
+            } for b in bars], cls=_NumpyEncoder)
 
         daily_json = _serialize(daily_bars)
         weekly_json = _serialize(weekly_bars) if weekly_bars and len(weekly_bars) >= 2 else "[]"

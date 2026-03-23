@@ -2,11 +2,24 @@
 Module 4: Notion Report Publisher (DB対応版)
 分析結果をNotion Database の行として追加 + 詳細ページを生成
 """
-import datetime, logging
+import datetime, logging, json
 from typing import Dict, List, Optional
 from pathlib import Path
 import requests
 import sys, os
+
+
+class _NumpyEncoder(json.JSONEncoder):
+    """numpy int64/float64 → Python native types for JSON serialization"""
+    def default(self, obj):
+        try:
+            import numpy as np
+            if isinstance(obj, np.integer): return int(obj)
+            if isinstance(obj, np.floating): return float(obj)
+            if isinstance(obj, np.ndarray): return obj.tolist()
+        except ImportError:
+            pass
+        return super().default(obj)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.settings import NOTION_API_KEY, NOTION_PARENT_PAGE_ID, NOTION_DATABASE_ID, CATEGORY_ORDER, GITHUB_PAGES_BASE_URL
 from modules.quantitative import QuantReport, StockPerformance
@@ -23,7 +36,12 @@ class NotionClient:
 
     def _req(self, method, ep, json_data=None, timeout=60):
         try:
-            r = self.s.request(method, f"{self.BASE_URL}{ep}", json=json_data, timeout=timeout)
+            if json_data is not None:
+                # Use custom encoder to handle numpy int64/float64
+                body = json.dumps(json_data, cls=_NumpyEncoder, ensure_ascii=False)
+                r = self.s.request(method, f"{self.BASE_URL}{ep}", data=body.encode("utf-8"), timeout=timeout)
+            else:
+                r = self.s.request(method, f"{self.BASE_URL}{ep}", timeout=timeout)
             r.raise_for_status(); return r.json()
         except requests.exceptions.RequestException as e:
             logger.error(f"Notion [{method} {ep}]: {e}")
