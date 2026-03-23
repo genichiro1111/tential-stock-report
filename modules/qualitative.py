@@ -365,13 +365,19 @@ def _load_qual_prefetch(path) -> Optional[QualReport]:
     news = raw.get("news", {})
     for n in news.get("tential", []):
         report.market_sentiment.tential_news.append(
-            NewsItem(title=n["title"], source=n.get("source", ""), relevance="tential"))
+            NewsItem(title=n["title"], source=n.get("source", ""), url=n.get("url", ""), date=n.get("date", ""), relevance="tential"))
     for n in news.get("market", []):
         report.market_sentiment.market_news.append(
-            NewsItem(title=n["title"], source=n.get("source", ""), relevance="market"))
+            NewsItem(title=n["title"], source=n.get("source", ""), url=n.get("url", ""), date=n.get("date", ""), relevance="market"))
+    for n in news.get("growth", []):
+        report.market_sentiment.sector_news.append(
+            NewsItem(title=n["title"], source=n.get("source", ""), url=n.get("url", ""), date=n.get("date", ""), relevance="growth"))
     for n in news.get("sector", []):
         report.market_sentiment.sector_news.append(
-            NewsItem(title=n["title"], source=n.get("source", ""), relevance="sector"))
+            NewsItem(title=n["title"], source=n.get("source", ""), url=n.get("url", ""), date=n.get("date", ""), relevance="sector"))
+    for n in news.get("global", []):
+        report.market_sentiment.market_news.append(
+            NewsItem(title=n["title"], source=n.get("source", ""), url=n.get("url", ""), date=n.get("date", ""), relevance="global"))
 
     # ── Summaries ──
     summaries = raw.get("market_summary", {})
