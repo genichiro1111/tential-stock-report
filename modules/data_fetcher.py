@@ -516,7 +516,11 @@ class StockDataFetcher:
             "S&P 500":   (raw.get("spx",     []), ohlcv),
         }
         for bm_name, (rows, cols) in bm_map.items():
-            result["benchmarks"][bm_name] = to_df(rows, cols[:len(rows[0])] if rows else cols)
+            if rows:
+                actual_cols = ohlcv[:len(rows[0])] if len(rows[0]) > len(cols) else cols[:len(rows[0])]
+                result["benchmarks"][bm_name] = to_df(rows, actual_cols)
+            else:
+                result["benchmarks"][bm_name] = to_df(rows, cols)
 
         # Margin data (J-Quants format from Chrome prefetch)
         margin_rows = raw.get("margin", [])
