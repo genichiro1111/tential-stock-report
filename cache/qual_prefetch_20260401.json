@@ -1,5 +1,6 @@
 {
-  "generated_at": "2026-04-01T16:51:26+09:00",
+  "generated_at": "2026-04-01T17:00:00+09:00",
+  "forum_posts": [],
   "tential_news": [
     {
       "title": "TENTIAL、丸ノ内ホテル100周年でBAKUNEコラボ宿泊プラン販売",
@@ -8,7 +9,7 @@
       "date": "2026-03-30"
     },
     {
-      "title": "BAKUNEが改良をやめない理由 - 2026春夏で新構造発表へ",
+      "title": "BAKUNEが改良をやめない理由 — 2026春夏で新構造発表へ",
       "source": "TENTIAL note",
       "url": "https://note.tential.jp/n/ncd03dbd164b5",
       "date": "2026-03-29"
@@ -34,15 +35,15 @@
       "date": "2026-03-31"
     },
     {
-      "title": "日経平均4日続落 中東情勢の不透明感で822円安",
-      "source": "日経",
+      "title": "日経平均4日続落 中東情勢の不透明感で822円安の51,064円",
+      "source": "日経新聞",
       "url": "https://www.nikkei.com/",
       "date": "2026-03-31"
     }
   ],
   "global_news": [
     {
-      "title": "S&P500 年初来約7%下落、景気後退確率49%に上昇 - Moody's",
+      "title": "S&P500 年初来約7%下落、景気後退確率49%に上昇",
       "source": "Motley Fool",
       "url": "https://www.fool.com/investing/2026/03/28/stock-market-crash-in-2026-the-sp-500-sounds-an-al/",
       "date": "2026-03-28"
@@ -54,7 +55,7 @@
       "date": "2026-03-30"
     },
     {
-      "title": "イラン軍事衝突で原油40%超上昇、エネルギーコスト懸念が市場を圧迫",
+      "title": "イラン軍事衝突で原油40%超上昇、エネルギーコスト懸念",
       "source": "CNBC",
       "url": "https://www.cnbc.com/2026/03/27/stock-market-next-week-outlook-for-march-30-april-3-2026.html",
       "date": "2026-03-27"
@@ -62,7 +63,7 @@
   ],
   "sector_news": [
     {
-      "title": "ウェルネス・アクティブウェア市場、2026年はサステナブル素材がメインストリームに",
+      "title": "ウェルネス・アクティブウェア市場、サステナブル素材がメインストリームに",
       "source": "Solution How",
       "url": "https://www.solutionhow.com/en-us/education/why-sustainable-workout-clothes-are-dominating-trends-in-2026/",
       "date": "2026-03-25"
@@ -73,5 +74,12 @@
       "url": "https://www.nomura.co.jp/wealthstyle/article/0607/",
       "date": "2026-03-29"
     }
+  ],
+  "events_next_week": [
+    "4/7 日銀・主要行貸出動向（3月）",
+    "4/8 米CPI（3月）発表 — インフレ動向に注目",
+    "4/9 FOMC議事要旨（3月会合分）公開",
+    "4/10 TENTIAL 月次開示タイミング（非公開の可能性あり）",
+    "4/11 SQ算出日（先物・オプション決済）"
   ]
 }

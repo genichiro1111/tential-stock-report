@@ -327,7 +327,12 @@ def _get_qual_prefetch_path():
 
 
 def _load_qual_prefetch(path) -> Optional[QualReport]:
-    """Chrome/WebSearch経由で取得・保存された定性分析プリフェッチJSONからQualReportを生成"""
+    """Chrome/WebSearch経由で取得・保存された定性分析プリフェッチJSONからQualReportを生成
+
+    2つのJSONフォーマットに対応:
+      Format A (nested): {"news": {"tential": [...], "market": [...], ...}, "market_summary": {...}}
+      Format B (flat):   {"tential_news": [...], "market_news": [...], "global_news": [...], ...}
+    """
     import json as _json
     try:
         raw = _json.loads(path.read_text(encoding="utf-8"))
@@ -361,35 +366,63 @@ def _load_qual_prefetch(path) -> Optional[QualReport]:
     report.yahoo_bbs.topic_categories = forum_analysis.get("topic_categories", [])
     report.yahoo_bbs.forum_posts = posts
 
-    # ── News ──
-    news = raw.get("news", {})
-    for n in news.get("tential", []):
-        report.market_sentiment.tential_news.append(
-            NewsItem(title=n["title"], source=n.get("source", ""), url=n.get("url", ""), date=n.get("date", ""), relevance="tential"))
-    for n in news.get("market", []):
-        report.market_sentiment.market_news.append(
-            NewsItem(title=n["title"], source=n.get("source", ""), url=n.get("url", ""), date=n.get("date", ""), relevance="market"))
-    for n in news.get("growth", []):
-        report.market_sentiment.sector_news.append(
-            NewsItem(title=n["title"], source=n.get("source", ""), url=n.get("url", ""), date=n.get("date", ""), relevance="growth"))
-    for n in news.get("sector", []):
-        report.market_sentiment.sector_news.append(
-            NewsItem(title=n["title"], source=n.get("source", ""), url=n.get("url", ""), date=n.get("date", ""), relevance="sector"))
-    for n in news.get("global", []):
-        report.market_sentiment.market_news.append(
-            NewsItem(title=n["title"], source=n.get("source", ""), url=n.get("url", ""), date=n.get("date", ""), relevance="global"))
+    # ── Helper: NewsItem list from raw list of dicts ──
+    def _to_news(items: List, relevance: str) -> List[NewsItem]:
+        result = []
+        for n in items:
+            if isinstance(n, dict) and n.get("title"):
+                result.append(NewsItem(
+                    title=n["title"], source=n.get("source", ""),
+                    url=n.get("url", ""), date=n.get("date", ""),
+                    relevance=relevance))
+        return result
 
-    # ── Summaries ──
+    # ── News — support both nested and flat formats ──
+    news_nested = raw.get("news", {})
+    if news_nested and isinstance(news_nested, dict):
+        # Format A: nested {"news": {"tential": [...], ...}}
+        report.market_sentiment.tential_news = _to_news(news_nested.get("tential", []), "tential")
+        report.market_sentiment.market_news = _to_news(news_nested.get("market", []), "market")
+        report.market_sentiment.market_news += _to_news(news_nested.get("global", []), "global")
+        report.market_sentiment.sector_news = _to_news(news_nested.get("growth", []), "growth")
+        report.market_sentiment.sector_news += _to_news(news_nested.get("sector", []), "sector")
+    else:
+        # Format B: flat {"tential_news": [...], "market_news": [...], ...}
+        report.market_sentiment.tential_news = _to_news(raw.get("tential_news", []), "tential")
+        report.market_sentiment.market_news = _to_news(raw.get("market_news", []), "market")
+        report.market_sentiment.market_news += _to_news(raw.get("global_news", []), "global")
+        report.market_sentiment.sector_news = _to_news(raw.get("sector_news", []), "sector")
+
+    # ── Summaries — support both nested and flat ──
     summaries = raw.get("market_summary", {})
-    report.market_sentiment.jp_market_summary = summaries.get("jp", "")
-    report.market_sentiment.growth_market_summary = summaries.get("growth", "")
-    report.market_sentiment.global_summary = summaries.get("global", "")
+    if summaries and isinstance(summaries, dict):
+        report.market_sentiment.jp_market_summary = summaries.get("jp", "")
+        report.market_sentiment.growth_market_summary = summaries.get("growth", "")
+        report.market_sentiment.global_summary = summaries.get("global", "")
+    else:
+        # Auto-generate summaries from news titles if not provided
+        if report.market_sentiment.market_news:
+            jp_titles = [n.title for n in report.market_sentiment.market_news if n.relevance == "market"]
+            global_titles = [n.title for n in report.market_sentiment.market_news if n.relevance == "global"]
+            if jp_titles:
+                sent = _classify_sentiment(jp_titles)
+                tone = "強気" if sent["bullish"] > sent["bearish"] else ("弱気" if sent["bearish"] > sent["bullish"] else "中立")
+                report.market_sentiment.jp_market_summary = f"日本株市場: {tone}ムード。{jp_titles[0]}"
+            if global_titles:
+                report.market_sentiment.global_summary = f"米国市場: {global_titles[0]}"
+        if report.market_sentiment.sector_news:
+            growth = [n.title for n in report.market_sentiment.sector_news if n.relevance == "growth"]
+            if growth:
+                report.market_sentiment.growth_market_summary = f"グロース市場: {growth[0]}"
 
     # ── Events next week ──
     report.market_sentiment.key_events_next_week = raw.get("events_next_week", [])
 
+    total_news = (len(report.market_sentiment.tential_news) +
+                  len(report.market_sentiment.market_news) +
+                  len(report.market_sentiment.sector_news))
     logger.info(f"✅ Qual prefetch loaded — forum: {len(posts)}, "
-                f"news: {len(report.market_sentiment.market_news)}, "
+                f"news: {total_news}, "
                 f"events: {len(report.market_sentiment.key_events_next_week)}")
     return report
 
